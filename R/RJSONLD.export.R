@@ -34,7 +34,7 @@ setMethod("RJSONLD.export", "ANY", function(object, path){
 setMethod("RJSONLD.export", "lm", function(object, path){
   summary <- summary(object)
   coef <- coef(summary)
-  res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/ontologies/stats'),
                `@type` = 'LinearModel',
                modelFormula = deparse(object$call$formula),
                r2 = summary$r.squared,
