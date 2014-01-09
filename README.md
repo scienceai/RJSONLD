@@ -19,7 +19,7 @@ the relative path of the file you wish to create:
 will create the following JSON-LD file:
 
 	{
-	  "@context" : { "@vocab" : "http://standardanalytics.io/stats" },
+	  "@context" : { "@vocab" : "http://standardanalytics.io/stats/" },
 	  "@type" : "LinearModel",
 	  "modelFormula" : "iris$Petal.Length ~ iris$Sepal.Length",
 	  "r2" : 0.75995,

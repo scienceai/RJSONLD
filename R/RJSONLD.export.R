@@ -34,7 +34,7 @@ setMethod("RJSONLD.export", "ANY", function(object, path){
 setMethod("RJSONLD.export", "lm", function(object, path){
   summary <- summary(object)
   coef <- coef(summary)
-  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                `@type` = 'LinearModel',
                modelFormula = deparse(object$call$formula),
                r2 = summary$r.squared,
@@ -79,7 +79,7 @@ setMethod("RJSONLD.export", "glm", function(object, path){
       terms[cpt]<- substr(names[i],9,nchar(names[i]))
     }
   }
-  res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                `@type` = 'GeneralizedLinearModel',
                modelFormula = deparse(object$call$formula),
                aic = summary$aic,
@@ -110,7 +110,7 @@ setMethod("RJSONLD.export", "glm", function(object, path){
 setMethod("RJSONLD.export", "aov", function(object, path){
   summary <- summary(object)
   terms <- attr(object$terms,'term.labels')
-  res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                `@type` = 'LinearModel',
                modelFormula = deparse(object$call$formula),
                anova = list()
@@ -142,7 +142,7 @@ setMethod("RJSONLD.export", "aov", function(object, path){
 setOldClass("aovlist")
 #' @rdname RJSONLD.export-methods
 setMethod("RJSONLD.export", "aovlist", function(object, path){
-  res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                `@type` = 'LinearModel',
                modelFormula = deparse(attr(object,'call')$formula),
                anova = list()
@@ -187,7 +187,7 @@ setOldClass("htest")
 setMethod("RJSONLD.export", "htest", function(object, path){
   summary <- summary(object)
   if(length(grep("correlation",   object$method))){
-    res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+    res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                  `@type` = 'Correlation',
                  covariate1 = strsplit(object$data.name," and ")[[1]][1],
                  covariate2 = strsplit(object$data.name," and ")[[1]][2],
@@ -200,7 +200,7 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                  )
     )
   } else if(length(grep("proportions ",   object$method))){
-    res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+    res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                  `@type` = 'Proportion',
                  estimate = object$estimate[[1]],
                  statTest = list(
@@ -211,7 +211,7 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                  )
     )
   } else {
-    res <- list( `@context` = list( `@vocab` = 'http://schema.standardanalytics.io/ontology/stats'),
+    res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                  `@type` = 'StatTest',
                  description = object$data.name[[1]],
                  testStatistic = object$statistic[[1]],
