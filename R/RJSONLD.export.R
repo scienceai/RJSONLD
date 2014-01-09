@@ -3,7 +3,7 @@
 #'
 #' Simply reformats standard statistical function outputs into
 #' JSON-LD format, abiding with statistical vocabulary described in 
-#' https://github.com/standard-analytics/Schemas
+#' https://github.com/standard-analytics/schemas
 #'
 #' @param object object to be exported.
 #'
@@ -34,7 +34,7 @@ setMethod("RJSONLD.export", "ANY", function(object, path){
 setMethod("RJSONLD.export", "lm", function(object, path){
   summary <- summary(object)
   coef <- coef(summary)
-  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/ontologies/stats'),
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats'),
                `@type` = 'LinearModel',
                modelFormula = deparse(object$call$formula),
                r2 = summary$r.squared,
