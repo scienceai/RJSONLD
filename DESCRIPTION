@@ -1,7 +1,7 @@
 Package: RJSONLD
 Type: Package
 Title: Semantic packaging tools for standard analytics
-Version: 1.0
+Version: 1.1
 Date: 2013-12-23
 Author: Joseph Dureau <joseph@standardanalytics.io>
 Maintainer: Joseph Dureau <joseph@standardanalytics.io>

@@ -1,7 +1,7 @@
 RJSONLD
 =======
 
-Make your results of standard statistical analysis **browsable** and **transparent** by exporting them into JSON-LD, following a [standardized 
+Make your results of standard statistical analysis **browsable** and **reproducible** by exporting them into JSON-LD, following a [standardized 
 vocabulary](http://standardanalytics.io/stats).
 
 *Version: 1.1*
@@ -26,7 +26,7 @@ will create the following JSON-LD file:
 	  "adjr2" : 0.75833,
 	  "fRatioTest" : {
 	    "@type" : "FTest",
-	    "statistic" : 468.55,
+	    "testStatistic" : 468.55,
 	    "dfNum" : 1,
 	    "dfDenom" : 148,
 	    "pValue" : 1.0387e-47
@@ -38,7 +38,7 @@ will create the following JSON-LD file:
 		  "stdError" : 0.50666,
 		  "statTest" : {
 		    "@type" : "TTest",
-		    "statistic" : -14.016,
+		    "testStatistic" : -14.016,
 		    "df" : 148,
 		    "pValue" : 6.1336e-29
 		  }
@@ -49,7 +49,7 @@ will create the following JSON-LD file:
 		  "stdError" : 0.085856,
 		  "statTest" : {
 		    "@type" : "TTest",
-		    "statistic" : 21.646,
+		    "testStatistic" : 21.646,
 		    "df" : 148,
 		    "pValue" : 1.0387e-47
 		  }
