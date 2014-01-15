@@ -1,13 +1,14 @@
-############################################################################
+#################################################################################
 #' Export results of standard statistical functions to semantic JSON-LD format
 #'
 #' Make your results of standard statistical analysis browsable and reproducible 
 #' by exporting them into JSON-LD, following a standardized vocabulary 
-#' (http://standardanalytics.io/stats).
+#' (http://standardanalytics.io/stats). This vocabulary is still at a draft stage:
+#' provide feedback, suggestions and extenstions at https://github.com/standard-analytics/RJSONLD
 #'
 #' @param object object to be exported.
 #'
-#' @param path relative where JSON-LD file is to be created
+#' @param path relative path where JSON-LD file is to be created
 #' exported.
 #'
 #' @return NULL
