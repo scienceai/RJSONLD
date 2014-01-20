@@ -8,7 +8,7 @@
 #'
 #' @param object object to be exported.
 #'
-#' @param path relative path where JSON-LD file is to be created
+#' @param path relative path where JSON-LD file is to be created.
 #' exported.
 #'
 #' @return NULL

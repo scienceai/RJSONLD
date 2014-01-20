@@ -26,17 +26,15 @@ RJSONLD.export(object, path)
 \arguments{
   \item{object}{object to be exported.}
 
-  \item{path}{relative where JSON-LD file is to be created
+  \item{path}{relative path where JSON-LD file is to be created.
   exported.}
 }
 \description{
-Simply reformats standard statistical function outputs into
-JSON-LD format, abiding with statistical vocabulary
-described in https://github.com/standard-analytics/Schemas
+Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/RJSONLD.
 }
 \examples{
-RJSONLD.export(lm(iris$Petal.Length~iris$Sepal.Length),"irisLM.json")
-RJSONLD.export(aov(iris$Petal.Length~iris$Species),"irisANOVA.json")
-RJSONLD.export(aov(iris$Petal.Length~iris$Species*iris$Sepal.Length),"irisANCOVA.json")
+RJSONLD.export(lm(iris$Petal.Length~iris$Sepal.Length),"irisLM.jsonld")
+RJSONLD.export(aov(iris$Petal.Length~iris$Species),"irisANOVA.jsonld")
+RJSONLD.export(aov(iris$Petal.Length~iris$Species*iris$Sepal.Length),"irisANCOVA.jsonld")
 }
 
