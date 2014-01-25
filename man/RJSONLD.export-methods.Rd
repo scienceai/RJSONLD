@@ -7,6 +7,8 @@
 \alias{RJSONLD.export,glm-method}
 \alias{RJSONLD.export,htest-method}
 \alias{RJSONLD.export,lm-method}
+\alias{RJSONLD.export,lme-method}
+\alias{RJSONLD.export,lme4-method}
 \title{Export results of standard statistical functions to semantic JSON-LD format}
 \usage{
 RJSONLD.export(object, path)
@@ -14,6 +16,10 @@ RJSONLD.export(object, path)
 \S4method{RJSONLD.export}{ANY}(object, path)
 
 \S4method{RJSONLD.export}{lm}(object, path)
+
+\S4method{RJSONLD.export}{lme}(object, path)
+
+\S4method{RJSONLD.export}{lme4}(object, path)
 
 \S4method{RJSONLD.export}{glm}(object, path)
 
@@ -30,6 +36,7 @@ RJSONLD.export(object, path)
   exported.}
 }
 \description{
+Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/terms. This module currently supports the current functions: lm, lme, lmer, glm, aov, chis.test, t.test, cor.test, prop.test.
 Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/RJSONLD.
 }
 \examples{
