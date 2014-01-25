@@ -4,7 +4,9 @@
 #' Make your results of standard statistical analysis browsable and reproducible 
 #' by exporting them into JSON-LD, following a standardized vocabulary 
 #' (http://standardanalytics.io/stats). This vocabulary is still at a draft stage:
-#' provide feedback, suggestions and extenstions at https://github.com/standard-analytics/RJSONLD
+#' provide feedback, suggestions and extenstions at https://github.com/standard-analytics/terms
+#' This module currently supports the current functions: lm, lme, lmer, glm, aov,
+#' chis.test, t.test, cor.test, prop.test.
 #'
 #' @param object object to be exported.
 #'
@@ -109,17 +111,15 @@ setMethod("RJSONLD.export", "lme4", function(object, path){
                AIC = summary$AICtab[1],
                modelCoefficients = list()
   )
-  terms = names(summary$fixDF$terms)
+  terms = rownames(summary$coefficients)
   for(i in 1:length(terms)){
     res$modelCoefficients[[i]]<-list(
       name = terms[i],
-      estimate = summary$tTable[i,][[1]],
-      stdError = summary$tTable[i,][[2]],
+      estimate = summary$coefficients[i,][[1]],
+      stdError = summary$coefficients[i,][[2]],
       statTest = list(
         `@type` = 'TTest',
-        testStatistic = summary$tTable[i,][[4]],
-        df = summary$tTable[i,][[3]],
-        pValue = summary$tTable[i,][[5]]
+        testStatistic = summary$coefficients[i,][[3]]
       )
     )
   }
