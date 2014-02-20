@@ -286,3 +286,195 @@ setMethod("RJSONLD.export", "htest", function(object, path){
   }
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
 })
+
+
+
+#' @rdname RJSONLD.export-methods
+setMethod("RJSONLD.export", "rstan", function(object, path){
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
+               `@type` = 'StatisticalModel',
+               modelFormula = object@stanmodel@model_code
+  )
+  
+  # Extract code for parameters
+  openBrackets = 1
+  indstart = str_locate(object@stanmodel@model_code[[1]], 'parameters')[2] + 2
+  parDef  =''
+  temp = unlist(strsplit(substr(object@stanmodel@model_code[[1]],indstart+1,nchar(object@stanmodel@model_code[[1]])), split=""))
+  i = 1
+  while(openBrackets != 0){
+    if(temp[i] == '}'){
+      openBrackets = openBrackets - 1	
+    } else if(temp[i] == '{'){
+      openBrackets = openBrackets + 1	
+    } 
+    parDef = paste(parDef,temp[i],sep='')
+    i = i+1
+  }
+  
+  # Extract code for model
+  openBrackets = 1
+  indstart = str_locate(object@stanmodel@model_code[[1]], 'model')[2] + 2
+  modelDef  =''
+  temp = unlist(strsplit(substr(object@stanmodel@model_code[[1]],indstart+1,nchar(object@stanmodel@model_code[[1]])), split=""))
+  i = 1
+  while(openBrackets != 0){
+    if(temp[i] == '}'){
+      openBrackets = openBrackets - 1	
+    } else if(temp[i] == '{'){
+      openBrackets = openBrackets + 1	
+    } 
+    modelDef = paste(modelDef,temp[i],sep='')
+    i = i+1
+  }
+
+  # Extract parameters that are defined in parameters section
+  allPars = names(fit@sim$samples[[1]])
+  basePars = list()
+  for (i in 1:length(allPars)){
+  	if(is.na(str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1])){
+  		tmpname = names(fit@sim$samples[[1]])[i]
+  	} else {
+	  	tmpname = 	substr(names(fit@sim$samples[[1]])[i],1,str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1]-1)  
+  	}
+  	if(!is.na(str_locate(parDef,tmpname)[1])){
+  		basePars = c(basePars,names(fit@sim$samples[[1]])[i])
+  	}
+  }
+  
+  distributionParametersTerminology = list()
+  normal <- c('mean','sigma')
+  cauchy <- c('median','sigma')
+  gamma <- c('alpha','beta')
+  distributionParametersTerminology$normal <- normal
+  distributionParametersTerminology$cauchy <- cauchy
+  distributionParametersTerminology$gamma <- gamma
+ 
+  trim <- function (x) gsub("^\\s+|\\s+$","",x) 
+  
+  npars = length(basePars)
+  modelParameter = rep(list(list()),npars)
+  for (i in 1:npars){
+  	prior = list()
+  	
+  	# locate line that defines the prior in the model section
+  	if(is.na(str_locate(basePars[[i]],'\\[')[1])){
+  		basename = basePars[i]
+  	} else {
+	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)  
+  	}
+  	line = ''
+  	for (j in 1:length(str_split(modelDef,'\n')[[1]])){
+  		# be careful, there needs to be a space between parameter name and ~
+  		if(!is.na(str_locate(str_split(modelDef,'\n')[[1]][[j]],paste(basename," ~",sep=''))[1])){ 
+  			line = str_split(modelDef,'\n')[[1]][[j]]
+  		}
+  	}
+  	
+  	distributionParameters <- list()
+  	# get distribution name
+  	if (line!=''){
+    	indstart = str_locate(line,'~')+1
+  		indend = indstart + str_locate(substr(line,indstart,nchar(line)),'\\(')[1]-2
+  		priorName = trim(substr(line,indstart,indend))
+  		prior <- setNames(priorName,'name')
+  		# get distribution arguments
+  		openPars = 1
+		indstart = indstart - 1 + str_locate(substr(line,indstart,nchar(line)), '\\(')[2]
+        args  =''
+        temp = unlist(strsplit(substr(line,indstart+1,nchar(line)), split=""))
+        j = 0
+        while(openPars != 0){
+        	if(temp[j+1] == ')'){
+           		openPars = openPars - 1	
+         	} else if(temp[j+1] == '('){
+           		openPars = openPars + 1	
+         	} 
+         	args = paste(args,temp[j],sep='')
+        	j = j+1
+       	}
+       	args = strsplit(args,split=',')
+       	if(priorName %in% names(distributionParametersTerminology)){
+	       	for(j in 1:length(args[[1]])){
+		       	tmp = list()
+    			tmp <- setNames(c(distributionParametersTerminology[[priorName]][j],args[[1]][j]),c('name','value'))
+    			distributionParameters[[length(distributionParameters)+1]] = tmp
+       		}
+       	} else {
+       		'Warning: unrecognized prior distribution. Pull requests welcome'
+       	}
+  
+  	} else {
+  		prior <- setNames('uniform','name')
+  	}
+  	
+  	# locate line that defines this parameter in the parameter section
+  	if(is.na(str_locate(basePars[[i]],'\\[')[1])){
+  		basename = basePars[i]
+  	} else {
+	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)  
+  	}
+  	line = ''
+  	for (j in 1:length(str_split(parDef,'\n')[[1]])){
+  		# be careful, there needs to be a space between parameter name and ~
+  		if(!is.na(str_locate(str_split(parDef,'\n')[[1]][[j]],basename[[1]])[1])){ 
+  			line = str_split(parDef,'\n')[[1]][[j]]
+  		}
+  	}
+  	if(!is.na(str_locate(line,'lower=')[1])){
+  		tmp = list()
+    	tmp <- setNames(c('lower',substr(str_extract(line,'lower(.*)>'),7,nchar(str_extract(line,'lower(.*)>'))-1)),c('name','value'))
+    	distributionParameters[[length(distributionParameters)+1]] = tmp
+  	} else {
+  		tmp = list()
+    	tmp <- setNames(c('lower','-inf'),c('name','value'))
+    	distributionParameters[[length(distributionParameters)+1]] = tmp
+  	}
+  	if(!is.na(str_locate(line,'upper=')[1])){
+  		tmp = list()
+    	tmp <- setNames(c('upper',substr(str_extract(line,'upper(.*)>'),7,nchar(str_extract(line,'upper(.*)>'))-1)),c('name','value'))
+    	distributionParameters[[length(distributionParameters)+1]] = tmp
+  	} else {
+  		tmp = list()
+    	tmp <- setNames(c('upper','inf'),c('name','value'))
+    	distributionParameters[[length(distributionParameters)+1]] = tmp
+  	}
+
+  	prior$distributionParameters <- list()
+  	prior$distributionParameters <- distributionParameters
+  	
+  	basename = basePars[[i]]
+  	modelParameter[[i]]$name <- basename
+  	modelParameter[[i]]$prior <- prior
+  }
+  res$modelParameter = modelParameter
+  
+  
+  res$modelFit <- list()
+  modelFit = list(
+    mcmcAlgorithm = fit@stan_args[[1]]$algorithm
+    )
+  for (k in 1:length(fit@sim$samples)){
+    tmp = as.data.frame(matrix(nrow = length(fit@sim$samples[[1]][[fit@model_pars[1]]]), ncol = npars))
+    for (i in 1:npars){
+      tmp[,i]=fit@sim$samples[[k]][[basePars[[i]]]]
+    }
+    write.table(tmp, file=paste(dirname(path),'/mcmcTrace_',as.character(k),'.csv',sep=''),col.names=basePars, sep=",",row.names = F)
+    modelFit$mcmcTrace <- list(
+        name = paste('mcmcTrace_',as.character(k),sep=''),
+		atcontext = list( xsd<- "http://www.w3.org/2001/XMLSchema#")
+      )
+	for (i in 1:npars){
+      modelFit$mcmcTrace$atcontext[[basePars[[i]]]] <- list(
+        atid = paste("_:",names(fit@sim$samples[[k]])[i],sep=''),
+        attype = "xsd:float"
+      )
+    }
+    modelFit$mcmcTrace$distribution = {
+    	contentPath = paste(dirname(path),'/mcmcTrace_',as.character(k),'.csv',sep='')
+    }
+    modelFit$name <- paste('chain_',as.character(k),sep='')
+    res$modelFit[[k]] <- modelFit
+  }
+  cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
+})
