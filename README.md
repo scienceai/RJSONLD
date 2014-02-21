@@ -4,7 +4,7 @@ RJSONLD
 Make your results of standard statistical analysis **browsable** and **reproducible** by exporting them into JSON-LD, following a [standardized 
 vocabulary](http://standardanalytics.io/stats).
 
-*Version: 1.1*
+*Version: 1.0.2
 
 Dependencies: RJSONIO, formula.tools
 
