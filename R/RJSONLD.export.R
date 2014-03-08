@@ -1,12 +1,13 @@
 #################################################################################
 #' Export results of standard statistical functions to semantic JSON-LD format
 #'
-#' Make your results of standard statistical analysis browsable and reproducible 
-#' by exporting them into JSON-LD, following a standardized vocabulary 
+#' Make your results of standard statistical analysis browsable and reproducible
+#' by exporting them into JSON-LD, following a standardized vocabulary
 #' (http://standardanalytics.io/stats). This vocabulary is still at a draft stage:
 #' provide feedback, suggestions and extenstions at https://github.com/standard-analytics/terms
 #' This module currently supports the current functions: lm, lme, lmer, glm, aov,
-#' chisq.test, t.test, cor.test, prop.test.
+#' chisq.test, t.test, cor.test, prop.test, pairwise.t.test, TukeyHSD, glm.nb,
+#' stan, anova, lrtest.
 #'
 #' @param object object to be exported.
 #'
@@ -14,8 +15,8 @@
 #' exported.
 #'
 #' @return NULL
-#' 
-#' 
+#'
+#'
 #' @export
 #' @docType methods
 #' @rdname RJSONLD.export-methods
@@ -61,12 +62,12 @@ setMethod("RJSONLD.export", "lm", function(object, path){
         n = length(object$xlevels[[indfactor]])
         res$modelVariable[[i]]$factorConstrast[[1]] <- list(
           name = paste(rownames(attr(object$terms,'factors'))[i],'-Intercept',sep=""),
-          value = c(1,rep(0,n-1))               
+          value = c(1,rep(0,n-1))
           )
         for(j in 2:n){
           res$modelVariable[[i]]$factorConstrast[[j]] <- list(
             name = paste(rownames(attr(object$terms,'factors'))[i],j-1,sep=""),
-            value = c(-1,rep(0,j-2),1,rep(0,n-j))               
+            value = c(-1,rep(0,j-2),1,rep(0,n-j))
           )
         }
       }
@@ -109,12 +110,12 @@ setMethod("RJSONLD.export", "lm", function(object, path){
   indRow = 1
   indFactor = 1
   nFactors = length(object$xlevels)
-  
+
   # all intercepts
   contrastlist = c()
   for(k in 1:length(res$modelVariable)){
     if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
     }
   }
   res$modelFit$optimalParameter[[indRow]]$contrast <- contrastlist
@@ -130,7 +131,7 @@ setMethod("RJSONLD.export", "lm", function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -139,7 +140,7 @@ setMethod("RJSONLD.export", "lm", function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -160,7 +161,7 @@ setMethod("RJSONLD.export", "lm", function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -171,7 +172,7 @@ setMethod("RJSONLD.export", "lm", function(object, path){
       }
     }
   }
-  
+
   # second order terms
   for(i in 1:length(colnames(attr(object$terms,"factors")))){
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -190,7 +191,7 @@ setMethod("RJSONLD.export", "lm", function(object, path){
             contrastlist = c()
             for(k in 1:length(res$modelVariable)){
               if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
               }
             }
             contrastlist[indFactor1]<-res$modelVariable[[ind1]]$factorConstrast[[j1]]$name
@@ -201,44 +202,44 @@ setMethod("RJSONLD.export", "lm", function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
   }
-  
+
   res$fitResidual <- list(
     list(
-      `@type`= c('Statistic', 'Min', 'Quantile'), 
+      `@type`= c('Statistic', 'Min', 'Quantile'),
       name = 'Min',
       value = quantile(summary$residuals)[[1]],
       percentile=0
     ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '1Q',
       value = quantile(summary$residuals)[[2]],
       percentile=25
     ),
     list(
-      `@type`= c('Statistic', 'Median', 'Quantile'), 
+      `@type`= c('Statistic', 'Median', 'Quantile'),
       name = 'Median',
       value = quantile(summary$residuals)[[3]],
       percentile=50
     ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '3Q',
       value = quantile(summary$residuals)[[4]],
       percentile=75
     ),
     list(
-      `@type`= c('Statistic', 'Max', 'Quantile'), 
+      `@type`= c('Statistic', 'Max', 'Quantile'),
       name = 'Max',
       value = quantile(summary$residuals)[[5]],
       percentile=100
     )
   )
-  
+
   cat(gsub('"true"','true',gsub("\t","  ",toJSON(res,pretty=1))),file=path)
 })
 
@@ -328,18 +329,18 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
         n = length(object$xlevels[[indfactor]])
         res$modelVariable[[i]]$factorConstrast[[1]] <- list(
           name = paste(rownames(attr(object$terms,'factors'))[i],'-Intercept',sep=""),
-          value = c(1,rep(0,n-1))               
+          value = c(1,rep(0,n-1))
         )
         for(j in 2:n){
           res$modelVariable[[i]]$factorConstrast[[j]] <- list(
             name = paste(rownames(attr(object$terms,'factors'))[i],j-1,sep=""),
-            value = c(-1,rep(0,j-2),1,rep(0,n-j))               
+            value = c(-1,rep(0,j-2),1,rep(0,n-j))
           )
         }
       }
     }
   }
-  
+
   res$modelFit <- list(
     `@type` = 'FitnessOptimization',
     fitnessCriterion = 'log-likelihood',
@@ -349,7 +350,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
     nParameters = length(object$coefficients),
     optimalParameter = list()
   )
-  
+
   terms = names(summary$aliased)
   for(i in 1:nrow(coef)){
     res$modelFit$optimalParameter[[i]]<-list(
@@ -373,21 +374,21 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
       res$modelFit$optimalParameter[[i]]$estimate$statisticalTest$`@type` <- 'ZTest'
     }
   }
-  
+
   indRow = 1
   indFactor = 1
   nFactors = length(object$xlevels)
-  
+
   # all intercepts
   contrastlist = c()
   for(k in 1:length(res$modelVariable)){
     if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
     }
   }
   res$modelFit$optimalParameter[[indRow]]$contrast <- contrastlist
   indRow = indRow + 1
-  
+
   # first order terms and 2nd order with only one categorical factor
   for(i in 1:length(colnames(attr(object$terms,"factors")))){
     if(sum(attr(object$terms,"factors")[,i])==1){
@@ -398,7 +399,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -407,7 +408,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -428,7 +429,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -439,7 +440,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
       }
     }
   }
-  
+
   # second order terms
   for(i in 1:length(colnames(attr(object$terms,"factors")))){
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -458,7 +459,7 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
             contrastlist = c()
             for(k in 1:length(res$modelVariable)){
               if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
               }
             }
             contrastlist[indFactor1]<-res$modelVariable[[ind1]]$factorConstrast[[j1]]$name
@@ -469,46 +470,46 @@ setMethod("RJSONLD.export", c("glm"), function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
   }
-  
+
   res$fitResidual <- list(
     list(
-      `@type`= c('Statistic', 'Min', 'Quantile'), 
+      `@type`= c('Statistic', 'Min', 'Quantile'),
       name = 'Min',
       value = summary$deviance.resid[[1]],
       percentile=0
       ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '1Q',
       value = summary$deviance.resid[[5]],
       percentile=25
     ),
     list(
-      `@type`= c('Statistic', 'Median', 'Quantile'), 
+      `@type`= c('Statistic', 'Median', 'Quantile'),
       name = 'Median',
       value = summary$deviance.resid[[7]],
       percentile=50
     ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '3Q',
       value = summary$deviance.resid[[4]],
       percentile=75
     ),
     list(
-      `@type`= c('Statistic', 'Max', 'Quantile'), 
+      `@type`= c('Statistic', 'Max', 'Quantile'),
       name = 'Max',
       value = summary$deviance.resid[[2]],
       percentile=100
     )
   )
-  
+
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
-  
+
 })
 
 
@@ -541,18 +542,18 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
         n = length(object$xlevels[[indfactor]])
         res$modelVariable[[i]]$factorConstrast[[1]] <- list(
           name = paste(rownames(attr(object$terms,'factors'))[i],'-Intercept',sep=""),
-          value = c(1,rep(0,n-1))               
+          value = c(1,rep(0,n-1))
         )
         for(j in 2:n){
           res$modelVariable[[i]]$factorConstrast[[j]] <- list(
             name = paste(rownames(attr(object$terms,'factors'))[i],j-1,sep=""),
-            value = c(-1,rep(0,j-2),1,rep(0,n-j))               
+            value = c(-1,rep(0,j-2),1,rep(0,n-j))
           )
         }
       }
     }
   }
-  
+
   res$modelFit <- list(
     `@type` = 'FitnessOptimization',
     fitnessCriterion = 'log-likelihood',
@@ -562,7 +563,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
     nParameters = length(object$coefficients),
     optimalParameter = list()
   )
-  
+
   terms = names(summary$aliased)
   for(i in 1:nrow(coef)){
     res$modelFit$optimalParameter[[i]]<-list(
@@ -586,21 +587,21 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
       res$modelFit$optimalParameter[[i]]$estimate$statisticalTest$`@type` <- 'ZTest'
     }
   }
-  
+
   indRow = 1
   indFactor = 1
   nFactors = length(object$xlevels)
-  
+
   # all intercepts
   contrastlist = c()
   for(k in 1:length(res$modelVariable)){
     if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+      contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
     }
   }
   res$modelFit$optimalParameter[[indRow]]$contrast <- contrastlist
   indRow = indRow + 1
-  
+
   # first order terms and 2nd order with only one categorical factor
   for(i in 1:length(colnames(attr(object$terms,"factors")))){
     if(sum(attr(object$terms,"factors")[,i])==1){
@@ -611,7 +612,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -620,7 +621,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -641,7 +642,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
           contrastlist = c()
           for(k in 1:length(res$modelVariable)){
             if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+              contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
             }
           }
           contrastlist[indFactor]<-res$modelVariable[[i+1]]$factorConstrast[[j]]$name
@@ -652,7 +653,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
       }
     }
   }
-  
+
   # second order terms
   for(i in 1:length(colnames(attr(object$terms,"factors")))){
     if(sum(attr(object$terms,"factors")[,i])==2){
@@ -671,7 +672,7 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
             contrastlist = c()
             for(k in 1:length(res$modelVariable)){
               if(!is.na(match("isCategorical",names(res$modelVariable[[k]])))){
-                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)              
+                contrastlist = c(contrastlist,res$modelVariable[[k]]$factorConstrast[[1]]$name)
               }
             }
             contrastlist[indFactor1]<-res$modelVariable[[ind1]]$factorConstrast[[j1]]$name
@@ -682,46 +683,46 @@ setMethod("RJSONLD.export", c("negbin"), function(object, path){
         }
         indFactor = indFactor + 1
       } else {
-        indRow = indRow + 1        
+        indRow = indRow + 1
       }
     }
   }
-  
+
   res$fitResidual <- list(
     list(
-      `@type`= c('Statistic', 'Min', 'Quantile'), 
+      `@type`= c('Statistic', 'Min', 'Quantile'),
       name = 'Min',
       value = summary$deviance.resid[[1]],
       percentile=0
     ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '1Q',
       value = summary$deviance.resid[[5]],
       percentile=25
     ),
     list(
-      `@type`= c('Statistic', 'Median', 'Quantile'), 
+      `@type`= c('Statistic', 'Median', 'Quantile'),
       name = 'Median',
       value = summary$deviance.resid[[7]],
       percentile=50
     ),
     list(
-      `@type`= c('Statistic', 'Quantile'), 
+      `@type`= c('Statistic', 'Quantile'),
       name = '3Q',
       value = summary$deviance.resid[[4]],
       percentile=75
     ),
     list(
-      `@type`= c('Statistic', 'Max', 'Quantile'), 
+      `@type`= c('Statistic', 'Max', 'Quantile'),
       name = 'Max',
       value = summary$deviance.resid[[2]],
       percentile=100
     )
   )
-  
+
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
-  
+
 })
 
 
@@ -752,18 +753,18 @@ setMethod("RJSONLD.export", "aov", function(object, path){
         n = length(object$xlevels[[indfactor]])
         res$modelVariable[[i]]$factorConstrast[[1]] <- list(
           name = paste(rownames(attr(object$terms,'factors'))[i],'-Intercept',sep=""),
-          value = c(1,rep(0,n-1))               
+          value = c(1,rep(0,n-1))
         )
         for(j in 2:n){
           res$modelVariable[[i]]$factorConstrast[[j]] <- list(
             name = paste(rownames(attr(object$terms,'factors'))[i],j-1,sep=""),
-            value = c(-1,rep(0,j-2),1,rep(0,n-j))               
+            value = c(-1,rep(0,j-2),1,rep(0,n-j))
           )
         }
       }
     }
   }
-  
+
   res$modelFit <- list(
     `@type` = 'FitnessOptimization',
     fitnessCriterion = 'least squares',
@@ -772,7 +773,7 @@ setMethod("RJSONLD.export", "aov", function(object, path){
     anovaFactor = list(),
     anovaResidual = list()
   )
-  
+
   for (i in 1:length(terms)){
     res$modelFit$anovaFactor[[i]]<-list(
       `@type` = 'AnovaFactor',
@@ -789,7 +790,7 @@ setMethod("RJSONLD.export", "aov", function(object, path){
         pValue = summary[[1]][['Pr(>F)']][[i]]
       )
     )
-  }  
+  }
   res$modelFit$anovaResidual <- list(
     `@type` = 'ANOVAResidual',
     sumOfSquares = summary[[1]][[2]][[length(summary[[1]][[2]])]],
@@ -817,29 +818,29 @@ setMethod("RJSONLD.export", "aovlist", function(object, path){
     if( i > 1){#attr(object$Within$terms,"dataClasses")[[i]]=="factor"){ # Categorical by default
       indfactor = indfactor + 1
       res$modelVariable[[i]]$isCategorical = 'true'
-      res$modelVariable[[i]]$levels = attr(object,"xlevels")[[indfactor]] 
+      res$modelVariable[[i]]$levels = attr(object,"xlevels")[[indfactor]]
       res$modelVariable[[i]]$factorConstrast = list()
       if(attr(object,"contrasts")[[indfactor]]=="contr.treatment"){
         n = length(attr(object,"xlevels")[[indfactor]])
         res$modelVariable[[i]]$factorConstrast[[1]] <- list(
           name = paste(rownames(attr(attr(object,'terms'),'factors'))[i],'-Intercept',sep=""),
-          value = c(1,rep(0,n-1))               
+          value = c(1,rep(0,n-1))
         )
         for(j in 2:n){
           res$modelVariable[[i]]$factorConstrast[[j]] <- list(
             name = paste(rownames(attr(attr(object,'terms'),'factors'))[i],j-1,sep=""),
-            value = c(-1,rep(0,j-2),1,rep(0,n-j))               
+            value = c(-1,rep(0,j-2),1,rep(0,n-j))
           )
         }
       }
     }
   }
-  
+
   ncoefficients = 0
   for(indStratum in 1:length(names(object))){
     ncoefficients = ncoefficients + length(object[[i]]$coefficients)
   }
-  
+
   res$modelFit <- list(
     `@type` = 'FitnessOptimization',
     fitnessCriterion = 'least squares',
@@ -848,7 +849,7 @@ setMethod("RJSONLD.export", "aovlist", function(object, path){
     anovaFactor = list(),
     anovaResidual = list()
   )
-  
+
   for(indStratum in 2:length(names(object))){
     terms <- attr(object[[indStratum]]$terms,'term.labels')
     summary = summary(object[[indStratum]])
@@ -870,7 +871,7 @@ setMethod("RJSONLD.export", "aovlist", function(object, path){
             pValue = summary[[1]][['Pr(>F)']][[i]]
           )
         )
-      }      
+      }
     }
     res$modelFit$anovaResidual[[length(res$modelFit$anovaResidual)+1]] <- list(
       `@type` = 'ANOVAResidual',
@@ -879,7 +880,7 @@ setMethod("RJSONLD.export", "aovlist", function(object, path){
       meanOfSquares = summary[[1]][[3]][[length(summary[[1]][[3]])]]
     )
   }
-      
+
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
 })
 
@@ -896,7 +897,7 @@ setMethod("RJSONLD.export", "anova", function(object, path){
     res$modelSet[[i]] <- list(
       name=paste("Model ",attr(object,"row.names")[[i]], sep=""),
       description=str_split(str_split(attr(object,"heading")[[2]],'\n')[[1]][i],': ')[[1]][2]
-    )    
+    )
   }
   if(length(grep('ratio',attr(object,"heading")[1]))>0){
     res$selectionCriterion[[1]] <- list(
@@ -925,7 +926,7 @@ setMethod("RJSONLD.export", "anova", function(object, path){
     print('The selection criterion is not recognized. Contributions to the RJSONLD package are welcome')
   }
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
-})       
+})
 
 
 setOldClass("htest")
@@ -937,8 +938,8 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                  `@type` = c('Correlation','Statistic'),
                  description = paste('Correlation between ',str_split(object$data.name," and ")[[1]][1],' and ',strsplit(object$data.name," and ")[[1]][2],sep=''),
                  valueReference = list(
-                   list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ), 
-                   list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )                   
+                   list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ),
+                   list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )
                    ),
                  value = object$estimate[[1]],
                  confidenceInterval = list(
@@ -986,8 +987,8 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                    `@type` = c('MeanDifference','Statistic'),
                    description = paste('T-test between ',object$data.name),
                    valueReference = list(
-                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ), 
-                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )                   
+                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ),
+                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )
                    ),
                    value = c(object$estimate[[1]]),
                    confidenceInterval = list(
@@ -1011,8 +1012,8 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                    `@type` = c('Mean','Statistic'),
                    description = paste('T-test between ',object$data.name),
                    valueReference = list(
-                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ), 
-                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )                   
+                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ),
+                     list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )
                    ),
                    value = c(object$estimate[[1]],object$estimate[[2]]),
                    confidenceInterval = list(
@@ -1123,11 +1124,11 @@ setMethod("RJSONLD.export", "TukeyHSD", function(object, path){
         ),
         value = object$method[i,1],
         confidenceInterval = list(
-          list( `@type` = c('Variable','Quantile'), 
+          list( `@type` = c('Variable','Quantile'),
                 percentile=2.5,
                 value = object$method[i,2]
           ),
-          list( `@type` = c('Variable','Quantile'), 
+          list( `@type` = c('Variable','Quantile'),
                 percentile=97.5,
                 value = object$method[i,3]
           )
@@ -1151,7 +1152,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
                modelVariable = list()
   )
   summary = summary(object)
-  
+
   # Extract code for parameters
   openBrackets = 1
   indstart = str_locate(object@stanmodel@model_code[[1]], 'parameters')[2] + 2
@@ -1160,14 +1161,14 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
   i = 1
   while(openBrackets != 0){
     if(temp[i] == '}'){
-      openBrackets = openBrackets - 1	
+      openBrackets = openBrackets - 1
     } else if(temp[i] == '{'){
-      openBrackets = openBrackets + 1	
-    } 
+      openBrackets = openBrackets + 1
+    }
     parDef = paste(parDef,temp[i],sep='')
     i = i+1
   }
-  
+
   # Extract code for model
   openBrackets = 1
   indstart = str_locate(object@stanmodel@model_code[[1]], 'model')[2] + 2
@@ -1176,10 +1177,10 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
   i = 1
   while(openBrackets != 0){
     if(temp[i] == '}'){
-      openBrackets = openBrackets - 1	
+      openBrackets = openBrackets - 1
     } else if(temp[i] == '{'){
-      openBrackets = openBrackets + 1	
-    } 
+      openBrackets = openBrackets + 1
+    }
     modelDef = paste(modelDef,temp[i],sep='')
     i = i+1
   }
@@ -1191,13 +1192,13 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
   	if(is.na(str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1])){
   		tmpname = names(fit@sim$samples[[1]])[i]
   	} else {
-	  	tmpname = 	substr(names(fit@sim$samples[[1]])[i],1,str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1]-1)  
+	  	tmpname = 	substr(names(fit@sim$samples[[1]])[i],1,str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1]-1)
   	}
   	if(!is.na(str_locate(parDef,tmpname)[1])){
   		basePars = c(basePars,names(fit@sim$samples[[1]])[i])
   	}
   }
-  
+
   # Extract variables
   tmp = str_split(modelDef,'\n')
   for(i in 2:(length(tmp[[1]])-1)){
@@ -1218,30 +1219,30 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
   distributionParametersTerminology$normal <- normal
   distributionParametersTerminology$cauchy <- cauchy
   distributionParametersTerminology$gamma <- gamma
- 
-  trim <- function (x) gsub("^\\s+|\\s+$","",x) 
-  
+
+  trim <- function (x) gsub("^\\s+|\\s+$","",x)
+
   npars = length(basePars)
   modelParameter = rep(list(list()),npars)
   for (i in 1:npars){
   	prior = list(
       distributionParameter <- list( a = 'a')
       )
-  	
+
   	# locate line that defines the prior in the model section
   	if(is.na(str_locate(basePars[[i]],'\\[')[1])){
   		basename = basePars[i]
   	} else {
-	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)  
+	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)
   	}
   	line = ''
   	for (j in 1:length(str_split(modelDef,'\n')[[1]])){
   		# be careful, there needs to be a space between parameter name and ~
-  		if(!is.na(str_locate(str_split(modelDef,'\n')[[1]][[j]],paste(basename," ~",sep=''))[1])){ 
+  		if(!is.na(str_locate(str_split(modelDef,'\n')[[1]][[j]],paste(basename," ~",sep=''))[1])){
   			line = str_split(modelDef,'\n')[[1]][[j]]
   		}
   	}
-  	
+
   	distributionParameter <- list()
   	# get distribution name
   	if (line!=''){
@@ -1257,10 +1258,10 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       j = 0
       while(openPars != 0){
         	if(temp[j+1] == ')'){
-           		openPars = openPars - 1	
+           		openPars = openPars - 1
          	} else if(temp[j+1] == '('){
-           		openPars = openPars + 1	
-         	} 
+           		openPars = openPars + 1
+         	}
          	args = paste(args,temp[j],sep='')
         	j = j+1
        	}
@@ -1269,30 +1270,30 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
 	       	for(j in 1:length(args[[1]])){
 		       	tmp = list()
 		       	if (!is.na(suppressWarnings(as.numeric(args[[1]][j])))){
-	    			tmp <- setNames(c(distributionParametersTerminology[[priorName]][j],args[[1]][j]),c('name','value'))	       		
+	    			tmp <- setNames(c(distributionParametersTerminology[[priorName]][j],args[[1]][j]),c('name','value'))
 		       	} else {
-	    			tmp <- setNames(c(distributionParametersTerminology[[priorName]][j],args[[1]][j]),c('name','valueReference'))	       		
+	    			tmp <- setNames(c(distributionParametersTerminology[[priorName]][j],args[[1]][j]),c('name','valueReference'))
 		       	}
     			distributionParameter[[length(distributionParameter)+1]] = tmp
        		}
        	} else {
        		'Warning: unrecognized prior distribution. Pull requests welcome'
        	}
-  
+
   	} else {
   		prior$name = 'uniform'
   	}
-  	
+
   	# locate line that defines this parameter in the parameter section
   	if(is.na(str_locate(basePars[[i]],'\\[')[1])){
   		basename = basePars[i]
   	} else {
-	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)  
+	  	basename = 	substr(basePars[[i]],1,str_locate(basePars[[i]],'\\[')[1]-1)
   	}
   	line = ''
   	for (j in 1:length(str_split(parDef,'\n')[[1]])){
   		# be careful, there needs to be a space between parameter name and ~
-  		if(!is.na(str_locate(str_split(parDef,'\n')[[1]][[j]],basename[[1]])[1])){ 
+  		if(!is.na(str_locate(str_split(parDef,'\n')[[1]][[j]],basename[[1]])[1])){
   			line = str_split(parDef,'\n')[[1]][[j]]
   		}
   	}
@@ -1317,20 +1318,20 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
 
   	prior$distributionParameter <- list()
   	prior$distributionParameter <- distributionParameter
-  	
+
   	basename = basePars[[i]]
   	modelParameter[[i]] <- list(
-      `@type` = 'Parameter', 
+      `@type` = 'Parameter',
       name = basename,
       prior = list(
         name = paste(basename,"-prior",sep=""),
         description = toJSON(prior,pretty=1)
-      ) 
+      )
     )
   }
   res$modelParameter = modelParameter
-  
-  
+
+
   res$modelFit <- list()
   modelFit = list(
     `@type` = 'MCMC',
@@ -1360,7 +1361,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,3]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic'),
       name = 'se_mean',
@@ -1369,7 +1370,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,2]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic','Quantile'),
       name = '2.5%',
@@ -1379,7 +1380,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,4]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic','Quantile'),
       name = '25%',
@@ -1389,7 +1390,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,5]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic','Quantile','Median'),
       name = '50%',
@@ -1399,7 +1400,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,6]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic','Quantile'),
       name = '75%',
@@ -1409,7 +1410,7 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,7]
     )
-    
+
     modelFit$parameterInference[[length(modelFit$parameterInference)+1]] <- list(
       `@type` = c('Statistic','Quantile'),
       name = '97.5%',
@@ -1419,19 +1420,19 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
       ),
       value = summary$summary[i,8]
     )
-    
+
     modelFit$effectiveSampleSize[[length(modelFit$effectiveSampleSize)+1]] <- list(
       valueReference = list( name = basePars[i] ),
       value = summary$summary[i,9]
     )
-    
+
     modelFit$rhat[[length(modelFit$rhat)+1]] <- list(
       valueReference = list( name = basePars[i] ),
       value = summary$summary[i,10]
     )
-    
-  }  
-        
+
+  }
+
   res$modelFit <- modelFit
 
   output = toJSON(res,pretty=1)
