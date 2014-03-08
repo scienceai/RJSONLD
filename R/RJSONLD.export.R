@@ -928,7 +928,6 @@ setMethod("RJSONLD.export", "anova", function(object, path){
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
 })
 
-
 setOldClass("htest")
 #' @rdname RJSONLD.export-methods
 setMethod("RJSONLD.export", "htest", function(object, path){
@@ -940,7 +939,7 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                  valueReference = list(
                    list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][1] ),
                    list( `@type`='Variable', name=strsplit(object$data.name," and ")[[1]][2] )
-                   ),
+                 ),
                  value = object$estimate[[1]],
                  confidenceInterval = list(
                    list( `@type`=c('Statistic','Quantile'), percentile=2.5, value=object$conf.int[1] ),
@@ -951,7 +950,7 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                    method = list(
                      description= object$method,
                      sameAs="http://stat.ethz.ch/R-manual/R-patched/library/stats/html/cor.test.html"
-                     ),
+                   ),
                    alternative = object$alternative,
                    testStatistic = object$statistic[[1]],
                    df = object$parameter[[1]],
@@ -975,9 +974,9 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                    pValue = object$p.value[[1]]
                  )
     )
-#    for (i in 1:length(object$estimate)){
-#      res$valueReference[[length(res$valueReference)+1]]= list( `@type`='Variable', name=names(object$estimate)[i] )
-#    }
+    #    for (i in 1:length(object$estimate)){
+    #      res$valueReference[[length(res$valueReference)+1]]= list( `@type`='Variable', name=names(object$estimate)[i] )
+    #    }
     for (i in 1:length(object$estimate)){
       res$value[i] = object$estimate[[i]]
     }
@@ -1050,15 +1049,15 @@ setMethod("RJSONLD.export", "htest", function(object, path){
                    pValue = object$p.value[[1]]
                  )
     )
-    for (i in 1:(length(colnames(test$observed))-2)){
-      res$description = paste(res$description,colnames(test$observed)[i],', ')
+    for (i in 1:(length(colnames(object$observed))-2)){
+      res$description = paste(res$description,colnames(object$observed)[i],', ')
     }
-    res$description = paste(res$description,colnames(test$observed)[(length(colnames(test$observed))-1)],sep='')
-    res$description = paste(res$description,' and ',colnames(test$observed)[(length(colnames(test$observed)))],sep='')
-    for (i in 1:length(colnames(test$observed))){
-      res$valueReference[[i]]= list( `@type`='Variable', name=colnames(test$observed)[i] )
+    res$description = paste(res$description,colnames(object$observed)[(length(colnames(object$observed))-1)],sep='')
+    res$description = paste(res$description,' and ',colnames(object$observed)[(length(colnames(object$observed)))],sep='')
+    for (i in 1:length(colnames(object$observed))){
+      res$valueReference[[i]]= list( `@type`='Variable', name=colnames(object$observed)[i] )
     }
-} else {
+  } else {
     res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
                  `@type` = 'StatisticalTest',
                  description = object$data.name[[1]],
@@ -1068,6 +1067,78 @@ setMethod("RJSONLD.export", "htest", function(object, path){
     )
   }
   cat(gsub("\t","  ",toJSON(res,pretty=1)),file=path)
+})
+
+
+setOldClass("pairwise.htest")
+#' @rdname RJSONLD.export-methods
+setMethod("RJSONLD.export", "pairwise.htest", function(object, path){
+  summary <- summary(object)
+  varname = strsplit(object$data.name," and ")[[1]][2]
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
+               `@type` = 'MultipleComparison',
+               method = list(
+                 description= paste(object$method,' (',object$p.adjust.method,')',sep=''),
+                 sameAs="http://stat.ethz.ch/R-manual/R-patched/library/stats/html/pairwise.t.test.html"
+               ),
+               comparison=c()
+  )
+  for(i in 1:(length(rownames(object$p.value)))){
+    for(j in 1:i){
+      res$comparison[[length(res$comparison)+1]] <- list(
+        `@type` = 'Statistic',
+        valueReference = list(
+          list( `@type` = 'Variable', name = paste(varname,i+1,sep='') ),
+          list( `@type` = 'Variable', name = paste(varname,j,sep='') )
+        ),
+        statisticalTest = list(
+          pValue = object$p.value[i,j],
+          attype = 'StatisticalTest'
+        )
+      )
+    }
+  }
+  cat(gsub('attype','@type',gsub("\t","  ",toJSON(res,pretty=1))),file=path)
+})
+
+setOldClass("TukeyHSD")
+#' @rdname RJSONLD.export-methods
+setMethod("RJSONLD.export", "TukeyHSD", function(object, path){
+  summary <- summary(object)
+  res <- list( `@context` = list( `@vocab` = 'http://standardanalytics.io/stats/'),
+               `@type` = 'MultipleComparison',
+               method = list(
+                 description= 'Tukey multiple comparisons of means',
+                 sameAs="http://stat.ethz.ch/R-manual/R-patched/library/stats/html/pairwise.t.test.html"
+               ),
+               comparison=c()
+  )
+  for(i in 1:(length(rownames(object$method)))){
+    res$comparison[[length(res$comparison)+1]] <- list(
+      `@type` = 'Statistic',
+      description = rownames(object$method)[i],
+      valueReference = list(
+        list( `@type` = 'Variable', name = strsplit(rownames(object$method)[i],'-')[[1]][1] ),
+        list( `@type` = 'Variable', name = strsplit(rownames(object$method)[i],'-')[[1]][2] )
+      ),
+      value = object$method[i,1],
+      confidenceInterval = list(
+        list( `@type` = c('Variable','Quantile'),
+              percentile=2.5,
+              value = object$method[i,2]
+        ),
+        list( `@type` = c('Variable','Quantile'),
+              percentile=97.5,
+              value = object$method[i,3]
+        )
+      ),
+      statisticalTest = list(
+        pValue = object$method[i,4],
+        attype = 'StatisticalTest'
+      )
+    )
+  }
+  cat(gsub('attype','@type',gsub("\t","  ",toJSON(res,pretty=1))),file=path)
 })
 
 
@@ -1186,16 +1257,16 @@ setMethod("RJSONLD.export", "stanfit", function(object, path){
   }
 
   # Extract parameters that are defined in parameters section
-  allPars = names(fit@sim$samples[[1]])
+  allPars = names(object@sim$samples[[1]])
   basePars = list()
   for (i in 1:length(allPars)){
-  	if(is.na(str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1])){
-  		tmpname = names(fit@sim$samples[[1]])[i]
+  	if(is.na(str_locate(names(object@sim$samples[[1]])[i],'\\[')[1])){
+  		tmpname = names(object$sim$samples[[1]])[i]
   	} else {
-	  	tmpname = 	substr(names(fit@sim$samples[[1]])[i],1,str_locate(names(fit@sim$samples[[1]])[i],'\\[')[1]-1)
+	  	tmpname = 	substr(names(object$sim$samples[[1]])[i],1,str_locate(names(object$sim$samples[[1]])[i],'\\[')[1]-1)
   	}
   	if(!is.na(str_locate(parDef,tmpname)[1])){
-  		basePars = c(basePars,names(fit@sim$samples[[1]])[i])
+  		basePars = c(basePars,names(object$sim$samples[[1]])[i])
   	}
   }
 

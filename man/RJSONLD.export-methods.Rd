@@ -9,6 +9,11 @@
 \alias{RJSONLD.export,lm-method}
 \alias{RJSONLD.export,lme-method}
 \alias{RJSONLD.export,lme4-method}
+\alias{RJSONLD.export,TukeyHSD-method}
+\alias{RJSONLD.export,anova-method}
+\alias{RJSONLD.export,negbin-method}
+\alias{RJSONLD.export,pairwise.htest-method}
+\alias{RJSONLD.export,stanfit-method}
 \title{Export results of standard statistical functions to semantic JSON-LD format}
 \usage{
 RJSONLD.export(object, path)
@@ -28,6 +33,16 @@ RJSONLD.export(object, path)
 \S4method{RJSONLD.export}{aovlist}(object, path)
 
 \S4method{RJSONLD.export}{htest}(object, path)
+
+\S4method{RJSONLD.export}{TukeyHSD}(object, path)
+
+\S4method{RJSONLD.export}{anova}(object, path)
+
+\S4method{RJSONLD.export}{negbin}(object, path)
+
+\S4method{RJSONLD.export}{pairwise.htest}(object, path)
+
+\S4method{RJSONLD.export}{stanfit}(object, path)
 }
 \arguments{
   \item{object}{object to be exported.}
@@ -36,7 +51,7 @@ RJSONLD.export(object, path)
   exported.}
 }
 \description{
-Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/terms. This module currently supports the current functions: lm, lme, lmer, glm, aov, chis.test, t.test, cor.test, prop.test.
+Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/terms. This module currently supports the current functions: lm, lme, lmer, glm, aov, chis.test, t.test, cor.test, prop.test, pairwise.t.test, TukeyHSD, glm.nb, stan, anova and lrtest.
 Make your results of standard statistical analysis browsable and reproducible by exporting them into JSON-LD, following a standardized vocabulary (http://standardanalytics.io/stats). This vocabulary is still at a draft stage: provide feedback, suggestions and extenstions at https://github.com/standard-analytics/RJSONLD.
 }
 \examples{
